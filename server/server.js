@@ -1,14 +1,15 @@
-import { ApolloServer } from "@apollo/server";
-import { startStandaloneServer } from "@apollo/server/standalone";
-import { typeDefs } from "./schema.js";
-import { resolvers } from "./resolvers/resolvers.js";
+const server = require("express");
+const graphQlHttp = require("express-graphql");
+const bodyParser = require("body-parser");
+const dotEnv = require("dotenv").config();
 
-const server = new ApolloServer({ typeDefs, resolvers });
+const app = server();
 
-const { url } = startStandaloneServer(server, {
-    listen: { port: 4000 }
-});
+app.use(bodyParser.json());
+app.use('/graphql', graphQlHttp({}));
 
-console.log(`Server Started running at: ${url}`);
-
+app.listen(process.env.PORT, ()=>{
+    console.log(`Express GraphQl running on PORT:${process.env.PORT}`);
+    
+})
 
