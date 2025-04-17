@@ -1,0 +1,7 @@
+node_modules/
+# Environment variables
+# Ignore env files
+.env
+server/.env
+client/.env
+
