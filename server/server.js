@@ -4,7 +4,9 @@ const bodyParser = require("body-parser");
 const { buildSchema } = require("graphql");
 const dotEnv = require("dotenv").config();
 const mongoose = require("mongoose")
+const bcrypt = require("bcryptjs")
 const Event = require("./models/events.js")
+const User = require("./models/user.js")
 
 const app = server();
 
@@ -19,18 +21,30 @@ app.use('/graphql', graphqlHTTP({
             date: String!
         }
         
+        type User {
+            _id: ID!
+            email: String!
+            password: String
+        }
+
+        
         input EventInput {
             title: String!
             description: String!
             price: Float!
             date: String!
         }
+        input UserInput {
+            email: String!
+            password: String!
+        }
         type RootQuery {
             events: [Event!]!
         }
         
         type RootMutation {
-            createEvent(eventInput: EventInput): Event    
+            createEvent(eventInput: EventInput): Event   
+            createUser(userInput: UserInput): User 
         }
         
         schema {
@@ -64,18 +78,36 @@ app.use('/graphql', graphqlHTTP({
                 console.log(err);
                 throw err;
             })
+        },
+        createUser: ({ userInput }) => {
+            return User.findOne({ email: userInput.email }).then(user => {
+                if (user) {
+                    throw new Error('User Already Exist!')
+                }
+                return bcrypt.hash(userInput.password, 12)
+            }).then(async hashedPassword => {
+                const user = new User({
+                    email: userInput.email,
+                    password: hashedPassword
+                })
+                const result = await user.save();
+                return { ...result._doc, password: null };
+            }).catch(err => {
+                throw err
+            })
         }
     },
     graphiql: true
 }));
 
-mongoose.connect(`mongodb+srv://syedabbuturab786:${process.env.MONGO_PASSWORD}@cluster0.a0vziuw.mongodb.net/${process.env.MONGO_DB}?retryWrites=true&w=majority&appName=Cluster0`).then(() => {
-    app.listen(process.env.PORT, () => {
-        console.log(`Express GraphQl running on PORT:${process.env.PORT}`);
-    })
-}).catch((err) => {
-    console.log(err);
+mongoose.connect(`mongodb+srv://syedabbuturab786:${process.env.MONGO_PASSWORD}@cluster0.a0vziuw.mongodb.net/${process.env.MONGO_DB}?retryWrites=true&w=majority&appName=Cluster0`)
+    .then(() => {
+        app.listen(process.env.PORT, () => {
+            console.log(`Express GraphQl running on PORT:${process.env.PORT}`);
+        })
+    }).catch((err) => {
+        console.log(err);
 
-})
+    })
 
 
