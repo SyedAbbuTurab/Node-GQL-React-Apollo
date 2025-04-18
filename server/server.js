@@ -63,22 +63,27 @@ app.use('/graphql', graphqlHTTP({
                 console.log(err)
             })
         },
-        createEvent: ({ eventInput }) => {
-            const event = new Event({
-                title: eventInput.title,
-                description: eventInput.description,
-                price: +eventInput.price,
-                date: new Date(eventInput.date)
-            })
-            return event.save().then(result => {
-                console.log(result)
-                return { ...result._doc };
-
-            }).catch((err) => {
-                console.log(err);
-                throw err;
-            })
+        createEvent: async ({ eventInput }) => {
+            try {
+                const event = new Event({
+                    title: eventInput.title,
+                    description: eventInput.description,
+                    price: parseFloat(eventInput.price),
+                    date: new Date(eventInput.date)
+                });
+        
+                const result = await event.save();
+        
+                return {
+                    ...result._doc,
+                    _id: result.id
+                };
+            } catch (err) {
+                console.error('Failed to create event:', err);
+                throw new Error(`Event creation failed: ${err.message}`);
+            }
         },
+        
         createUser: async ({ userInput }) => {
             try {
                 const existingUser = await User.findOne({ email: userInput.email });
