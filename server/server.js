@@ -19,12 +19,14 @@ app.use('/graphql', graphqlHTTP({
             description: String!
             price: Float!
             date: String!
+            creator: User!
         }
         
         type User {
             _id: ID!
             email: String!
             password: String
+            createdEvents: [Event!]
         }
 
         
@@ -54,14 +56,22 @@ app.use('/graphql', graphqlHTTP({
         
     `),
     rootValue: {
-        events: () => {
-            return Event.find().then(events => {
+        events: async () => {
+            try {
+                const events = await Event.find().populate('creator');
                 return events.map((row) => {
-                    return { ...row._doc }
-                })
-            }).catch(err => {
-                console.log(err)
-            })
+                    return {
+                        ...row._doc,
+                        _id: row.id,
+                        creator: row.creator ? {
+                            _id: row.creator._id.toString(),
+                            email: row.creator.email
+                        } : null
+                    };
+                });
+            } catch (err) {
+                throw new Error(`Fetching events failed: ${err.message}`)
+            }
         },
         createEvent: async ({ eventInput }) => {
             try {
@@ -70,19 +80,19 @@ app.use('/graphql', graphqlHTTP({
                     description: eventInput.description,
                     price: parseFloat(eventInput.price),
                     date: new Date(eventInput.date),
-                    creator:'6801e6b9848eb3f90ae2a76c'
+                    creator: '6801e6b9848eb3f90ae2a76c'
                 });
-        
+
                 const result = await event.save();
 
                 const creatorUser = await User.findById('6801e6b9848eb3f90ae2a76c');
-                if(!creatorUser) {
+                if (!creatorUser) {
                     throw new error("User not found!")
                 };
 
                 creatorUser.createdEvents.push(event);
                 await creatorUser.save()
-        
+
                 return {
                     ...result._doc,
                     _id: result.id
@@ -92,7 +102,7 @@ app.use('/graphql', graphqlHTTP({
                 throw new Error(`Event creation failed: ${err.message}`);
             }
         },
-        
+
         createUser: async ({ userInput }) => {
             try {
                 const existingUser = await User.findOne({ email: userInput.email });
