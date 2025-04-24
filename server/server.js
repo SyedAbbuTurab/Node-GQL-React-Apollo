@@ -69,10 +69,19 @@ app.use('/graphql', graphqlHTTP({
                     title: eventInput.title,
                     description: eventInput.description,
                     price: parseFloat(eventInput.price),
-                    date: new Date(eventInput.date)
+                    date: new Date(eventInput.date),
+                    creator:'6801e6b9848eb3f90ae2a76c'
                 });
         
                 const result = await event.save();
+
+                const creatorUser = await User.findById('6801e6b9848eb3f90ae2a76c');
+                if(!creatorUser) {
+                    throw new error("User not found!")
+                };
+
+                creatorUser.createdEvents.push(event);
+                await creatorUser.save()
         
                 return {
                     ...result._doc,
