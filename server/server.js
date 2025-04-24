@@ -11,6 +11,12 @@ const User = require("./models/user.js")
 const app = server();
 
 app.use(bodyParser.json());
+
+const user = (userId) => {
+    return User.findById(userId).then(user => {
+        return { ...user._doc, _id: user.id }
+    }).catch(err => { throw err })
+}
 app.use('/graphql', graphqlHTTP({
     schema: buildSchema(`
         type Event {
@@ -59,16 +65,11 @@ app.use('/graphql', graphqlHTTP({
         events: async () => {
             try {
                 const events = await Event.find().populate('creator');
-                return events.map((row) => {
-                    return {
-                        ...row._doc,
-                        _id: row.id,
-                        creator: row.creator ? {
-                            _id: row.creator._id.toString(),
-                            email: row.creator.email
-                        } : null
-                    };
-                });
+                return events.map((row) => ({
+                    ...row._doc,
+                    _id: row.id,
+                    creator: user.bind(this, row._doc.creator)
+                }))
             } catch (err) {
                 throw new Error(`Fetching events failed: ${err.message}`)
             }
