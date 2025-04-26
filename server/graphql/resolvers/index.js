@@ -5,7 +5,11 @@ const User = require("../../models/user.js")
 const events = (eventIds) => {
     return Event.find({ _id: { $in: eventIds } }).then(events => {
         return events.map(event => {
-            return { ...event._doc, _id: event.id, creator: user.bind(this, event.creator) }
+            return {
+                ...event._doc, _id: event.id,
+                date: new Date(event._doc.date).toISOString(),
+                creator: user.bind(this, event.creator)
+            }
         })
     }).catch(err => {
         throw err
@@ -25,6 +29,7 @@ module.exports = {
             return events.map((row) => ({
                 ...row._doc,
                 _id: row.id,
+                date: new Date(row._doc.date).toISOString(),
                 creator: user.bind(this, row._doc.creator)
             }))
         } catch (err) {
@@ -54,6 +59,7 @@ module.exports = {
             return {
                 ...result._doc,
                 _id: result.id,
+                date: new Date(row._doc.date).toISOString(),
                 creator: user.bind(this, result._doc.creator)
             };
         } catch (err) {
