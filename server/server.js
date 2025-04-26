@@ -106,7 +106,8 @@ app.use('/graphql', graphqlHTTP({
 
                 return {
                     ...result._doc,
-                    _id: result.id
+                    _id: result.id,
+                    creator: user.bind(this, result._doc.creator)
                 };
             } catch (err) {
                 console.error('Failed to create event:', err);
