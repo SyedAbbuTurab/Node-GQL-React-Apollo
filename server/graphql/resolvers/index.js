@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs")
 const Event = require("../../models/events.js")
 const User = require("../../models/user.js")
+const Booking = require("../../models/bookings.js")
 
 const events = async (eventIds) => {
     try {
@@ -71,7 +72,21 @@ module.exports = {
             throw new Error(`Event creation failed: ${err.message}`);
         }
     },
-
+    bookings: async () => {
+        try {
+            const bookings = await Booking.find();
+            return bookings.map(booking => {
+                return {
+                    ...booking._doc,
+                    _id: booking.id,
+                    createdAt: new Date(booking.createdAt).toISOString(),
+                    updatedAt: new Date(booking.updatedAt).toISOString(),
+                }
+            })
+        } catch (error) {
+            throw error;
+        }
+    },
     createUser: async ({ userInput }) => {
         try {
             const existingUser = await User.findOne({ email: userInput.email });
