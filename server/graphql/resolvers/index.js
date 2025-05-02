@@ -111,6 +111,20 @@ module.exports = {
         } catch (err) {
             throw new Error(`User creation failed: ${err.message}`);
         }
+    },
+    bookEvent: async (args) => {
+        const fetchedEvent = await Event.findOne({ _id: args.eventId })
+        const booking = new Booking({
+            user: '6801e6b9848eb3f90ae2a76c',
+            event: fetchedEvent
+        });
+        const result = await booking.save();
+        return {
+            ...result._doc,
+            _id: result.id,
+            createdAt: new Date(result.createdAt).toISOString(),
+            updatedAt: new Date(result.updatedAt).toISOString(),
+        }
     }
 
 }
