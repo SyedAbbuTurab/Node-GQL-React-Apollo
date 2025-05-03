@@ -3,15 +3,19 @@ const Event = require("../../models/events.js")
 const User = require("../../models/user.js")
 const Booking = require("../../models/bookings.js")
 
+const transfromEvent = event => {
+    return {
+        ...event._doc, _id: event.id,
+        date: new Date(event._doc.date).toISOString(),
+        creator: user.bind(this, event.creator)
+    }
+}
+
 const events = async (eventIds) => {
     try {
         const events = await Event.find({ _id: { $in: eventIds } })
         return events.map(event => {
-            return {
-                ...event._doc, _id: event.id,
-                date: new Date(event._doc.date).toISOString(),
-                creator: user.bind(this, event.creator)
-            }
+            return transfromEvent(event)
         })
     } catch (err) {
         throw err
@@ -21,11 +25,7 @@ const events = async (eventIds) => {
 const singleEvent = async (eventId) => {
     try {
         const event = await Event.findById(eventId);
-        return {
-            ...event._doc, _id: event.id, creator: user.bind(
-                this, event.creator
-            )
-        }
+        return transfromEvent(event)
     } catch (error) {
         throw error
     }
@@ -44,12 +44,9 @@ module.exports = {
     events: async () => {
         try {
             const events = await Event.find().populate('creator');
-            return events.map((row) => ({
-                ...row._doc,
-                _id: row.id,
-                date: new Date(row._doc.date).toISOString(),
-                creator: user.bind(this, row._doc.creator)
-            }))
+            return events.map(event => {
+                return transfromEvent(event)
+            }) 
         } catch (err) {
             throw new Error(`Fetching events failed: ${err.message}`)
         }
@@ -74,12 +71,7 @@ module.exports = {
             creatorUser.createdEvents.push(event);
             await creatorUser.save()
 
-            return {
-                ...result._doc,
-                _id: result.id,
-                date: new Date(row._doc.date).toISOString(),
-                creator: user.bind(this, result._doc.creator)
-            };
+            return transfromEvent(result);
         } catch (err) {
             console.error('Failed to create event:', err);
             throw new Error(`Event creation failed: ${err.message}`);
@@ -155,11 +147,12 @@ module.exports = {
             throw new Error('Event linked to this booking was not found');
           }
       
-          const event = {
-            ...booking.event._doc,
-            _id: booking.event.id,
-            creator: user.bind(this, booking.event.creator)
-          };
+        //   const event = {
+        //     ...booking.event._doc,
+        //     _id: booking.event.id,
+        //     creator: user.bind(this, booking.event.creator)
+        //   };
+        const event = transfromEvent(booking.event)
       
           await Booking.deleteOne({ _id: args.bookingId });
           return event;
